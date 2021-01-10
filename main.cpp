@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <cstdlib>
-#include "rtmidi/RtMidi.h"
+#include <RtMidi.h>
 
 void usage( void ) {
   // Error function in case of incorrect command-line
