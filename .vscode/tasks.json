@@ -15,6 +15,7 @@
                 "-framework",
                 "CoreServices",
                 "-I${workspaceFolder}/rtmidi",
+                "-I${workspaceFolder}/jack/common",
                 "${workspaceFolder}/main.cpp",
                 "${workspaceFolder}/rtmidi/RtMidi.cpp",
                 "-o",
