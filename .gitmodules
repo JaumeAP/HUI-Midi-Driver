@@ -1,3 +1,6 @@
 [submodule "rtmidi"]
 	path = rtmidi
 	url = https://github.com/thestk/rtmidi
+[submodule "jack"]
+	path = jack
+	url = https://github.com/jackaudio/jack2
