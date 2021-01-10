@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <RtMidi.h>
 
+
 void usage( void ) {
   // Error function in case of incorrect command-line
   // argument specifications.
