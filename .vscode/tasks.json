@@ -6,7 +6,7 @@
             "label": "C/C++: clang++ build Workspace",
             "command": "/usr/bin/clang++",
             "args": [
-                "-g","-v",
+                "-g",
                 "-D__MACOSX_CORE__",
                 "-framework","CoreMidi",
                 "-framework","CoreAudio",
