@@ -4,3 +4,6 @@
 [submodule "jack"]
 	path = jack
 	url = https://github.com/jackaudio/jack2
+[submodule "cpptime"]
+	path = cpptime
+	url = https://github.com/eglimi/cpptime
