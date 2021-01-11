@@ -7,13 +7,16 @@
 class HUIMidi
 {
 public:
-    HUIMidi(const char *Manufacturer,const char *Model);
+    HUIMidi();
     ~HUIMidi();
     void Sleep(int32_t duration);
+    void Connect(const char *Manufacturer,const char *Model);
     virtual void timer(); 
- private:
     RtMidiIn *midiin;
     RtMidiOut *midiout;
+    RtMidiIn *huimidiin;
+    RtMidiOut *huimidiout;
+ private:
     int searchSource(const char *Manufacturer,const char *Model);
     int searchDestination(const char *Manufacturer,const char *Model);
     void start();

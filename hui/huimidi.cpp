@@ -10,18 +10,33 @@
 std::vector<HUIMidi *> instances;
 void HUIMidi::timer() { std::cout << "timer" << std::endl; }
  
-HUIMidi::HUIMidi(const char *Manufacturer,const char *Model) {
+HUIMidi::HUIMidi() {
     if( !instances.empty() ) stop();
     instances.push_back(this);
     try {
         midiin = new RtMidiIn();
         midiout = new RtMidiOut();
+        huimidiin = new RtMidiIn();
+        huimidiout = new RtMidiOut();        
     }
     catch ( RtMidiError &error ) {
         error.printMessage();
         exit( EXIT_FAILURE );
     }
     start();
+}
+
+void HUIMidi::Connect(const char *Manufacturer,const char *Model) {
+    int srcNdx = searchSource(Manufacturer,Model);
+    int dstNdx = searchDestination(Manufacturer,Model);    
+    std::string srcName = "HUI ";
+    std::string dstName = "HUI ";
+    srcName = srcName + midiin->getPortName(srcNdx);
+    dstName = dstName + midiout->getPortName(dstNdx);
+    midiin->openPort( srcNdx );
+    midiout->openPort( dstNdx );
+    huimidiin->openVirtualPort(srcName);
+    huimidiout->openVirtualPort(srcName);
 }
 
 HUIMidi::~HUIMidi()
