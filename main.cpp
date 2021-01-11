@@ -1,10 +1,13 @@
 
 #include <iostream>
 #include <cstdlib>
-#include "hui/huitimer.h"
+#include "hui/huimidi.h"
+
+#include <string>
 
 
 int main( int argc, char ** /*argv[]*/ )
 {
-  HUITimer timer;
+  HUIMidi midi("Hercules","DJ Control MP3 e2");  
 }
+

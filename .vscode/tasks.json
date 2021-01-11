@@ -14,10 +14,11 @@
                 "-I${workspaceFolder}/rtmidi",               
                 "${workspaceFolder}/main.cpp",
                 "${workspaceFolder}/rtmidi/RtMidi.cpp",
-                "${workspaceFolder}/hui/huitimer.cpp",
+                "${workspaceFolder}/hui/huimidi.cpp",
                 "${workspaceFolder}/hui/porttime/porttime.c",
                 "${workspaceFolder}/hui/porttime/ptmacosx_mach.c",
                 "-o","${workspaceFolder}/main",
+                "-Wno-deprecated",
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

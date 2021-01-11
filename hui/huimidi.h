@@ -1,20 +1,23 @@
-#ifndef OPENMIDI_H
-#define OPENMIDI_H
+#ifndef HUIMIDI_H
+#define HUIMIDI_H
 
-#include <RtMidi.h>
 #include <iostream>
-#include "openhuitimer.h"
+#include <RtMidi.h>
 
-class openMidi : public openHUITimer
+class HUIMidi
 {
 public:
-    openMidi();
-    ~openMidi();
-protected:
-    virtual void timer() { std::cout << "timer" << std::endl; };
-private:
-    RtMidiIn  *midiin;
+    HUIMidi(const char *Manufacturer,const char *Model);
+    ~HUIMidi();
+    void Sleep(int32_t duration);
+    virtual void timer(); 
+ private:
+    RtMidiIn *midiin;
     RtMidiOut *midiout;
-};
+    int searchSource(const char *Manufacturer,const char *Model);
+    int searchDestination(const char *Manufacturer,const char *Model);
+    void start();
+    void stop();
+} ;
 
-#endif // OPENMIDI_H
+#endif // HUIMIDI_H
