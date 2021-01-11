@@ -5,12 +5,23 @@
 #include <RtMidi.h>
 #include "porttime/porttime.h"
 #include <vector>
-
+#include <iomanip>
 
 std::vector<HUIMidi *> instances;
-void HUIMidi::timer() { std::cout << "timer" << std::endl; }
- 
+const std::vector<unsigned char> mHUIReq = { 0x90, 0, 0  };
+const std::vector<unsigned char> mHUIACK =  { 0x90, 0, 0x7F };
+
+void printMessage(double deltatime,std::vector< unsigned char > *message){
+    unsigned int nBytes = message->size();
+    std::cout << "bytes: ";
+    for ( unsigned int i=0; i<nBytes; i++ ) 
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)message->at(i) << " ";
+    if ( nBytes > 0 )
+        std::cout << "   stamp = " << std::fixed << deltatime << std::endl;
+}
+
 HUIMidi::HUIMidi() {
+    bool live = false; 
     if( !instances.empty() ) stop();
     instances.push_back(this);
     try {
@@ -26,18 +37,6 @@ HUIMidi::HUIMidi() {
     start();
 }
 
-void HUIMidi::Connect(const char *Manufacturer,const char *Model) {
-    int srcNdx = searchSource(Manufacturer,Model);
-    int dstNdx = searchDestination(Manufacturer,Model);    
-    std::string srcName = "HUI ";
-    std::string dstName = "HUI ";
-    srcName = srcName + midiin->getPortName(srcNdx);
-    dstName = dstName + midiout->getPortName(dstNdx);
-    midiin->openPort( srcNdx );
-    midiout->openPort( dstNdx );
-    huimidiin->openVirtualPort(srcName);
-    huimidiout->openVirtualPort(srcName);
-}
 
 HUIMidi::~HUIMidi()
 {
@@ -46,13 +45,66 @@ HUIMidi::~HUIMidi()
     if( !instances.empty() ) start();
 }
 
-void poll(PtTimestamp timestamp, void *userData) {
-    for (std::vector<HUIMidi *>::iterator it = instances.begin(); 
-        it != instances.end(); ++it) (*it)->timer();
+void huicallback( double deltatime, std::vector< unsigned char > *message, void * userdata )
+{
+    HUIMidi& midi = *(HUIMidi *)userdata;
+    if(*message == mHUIReq) {
+        midi.live = true;
+        //std::cout << ">>" << "HUIReq" << std::endl;
+        return;
+    }
+    midi.huiReceived(deltatime,message);
 }
 
+void callback( double deltatime, std::vector< unsigned char > *message, void * userdata )
+{
+    HUIMidi& midi = *(HUIMidi *)userdata;
+    midi.received(deltatime,message);
+}
+
+void HUIMidi::received( double deltatime, std::vector< unsigned char > *message) {
+    std::cout << "DEV RECV ";
+    printMessage(deltatime,message);
+}
+
+void HUIMidi::huiReceived( double deltatime, std::vector< unsigned char > *message) {
+    std::cout << "VIRT RECV ";
+    printMessage(deltatime,message);
+}
+
+
+void HUIMidi::watchdog() {
+    if(live) {     
+        live = false;
+        //std::cout << ">>" << "HUIAck" << std::endl;
+    } else
+        std::cout << "VIRT RECV " << "HUITimeout" << std::endl;
+    huimidiout->sendMessage(&mHUIACK);
+}
+
+void HUIMidi::Connect(const char *Manufacturer,const char *Model) {
+    int srcNdx = searchSource(Manufacturer,Model);
+    int dstNdx = searchDestination(Manufacturer,Model);    
+    midiin->openPort( srcNdx );
+    midiout->openPort( dstNdx );
+    std::string srcName = std::string("HUI ") + midiin->getPortName(srcNdx);
+    std::string dstName = std::string("HUI ") + midiout->getPortName(dstNdx);
+    huimidiin->openVirtualPort(srcName);
+    huimidiout->openVirtualPort(dstName);
+    huimidiin->setCallback( &huicallback,this );
+    //huimidiin->ignoreTypes( false, false, false );
+    midiin->setCallback( &callback,this );
+    //midiin->ignoreTypes( false, false, false );
+}
+
+void poll(PtTimestamp timestamp, void *) {
+    for (std::vector<HUIMidi *>::iterator it = instances.begin(); it != instances.end(); ++it) 
+        (*it)->watchdog();
+}
+
+
 void HUIMidi::start() {
-    PtError err = Pt_Start(1000, poll,NULL);  
+    PtError err = Pt_Start(2000, poll,NULL);  
     if(err) throw err;
 }
 

@@ -11,16 +11,23 @@ public:
     ~HUIMidi();
     void Sleep(int32_t duration);
     void Connect(const char *Manufacturer,const char *Model);
-    virtual void timer(); 
     RtMidiIn *midiin;
     RtMidiOut *midiout;
     RtMidiIn *huimidiin;
     RtMidiOut *huimidiout;
- private:
-    int searchSource(const char *Manufacturer,const char *Model);
-    int searchDestination(const char *Manufacturer,const char *Model);
+  protected:
+    virtual void huiReceived( double deltatime, std::vector< unsigned char > *message);
+    virtual void received( double deltatime, std::vector< unsigned char > *message);
+  private:
+    bool live;
     void start();
     void stop();
+    void watchdog();
+    int searchSource(const char *,const char *);
+    int searchDestination(const char *,const char *);
+    friend void poll(int32_t, void *);
+    friend void callback( double, std::vector< unsigned char > *, void * );
+    friend void huicallback( double, std::vector< unsigned char > *, void * );
 } ;
 
 #endif // HUIMIDI_H
