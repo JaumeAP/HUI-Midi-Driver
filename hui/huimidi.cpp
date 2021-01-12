@@ -4,22 +4,11 @@
 #include <CoreServices/CoreServices.h>
 #include <RtMidi.h>
 #include "porttime/porttime.h"
-#include <vector>
 #include <iomanip>
 
-#define mNOTE 0x90   // 144
-#define mCTRL 0xB0   // 176
-
-#define cWHEEL 0xB0   // 176
-
 std::vector<HUIMidi *> instances;
-const std::vector<unsigned char> mHUIReq = { mNOTE, 0, 0  };
-const std::vector<unsigned char> mHUIACK =  { mNOTE, 0, 0x7F };
-const std::vector<unsigned char> mHUIRESET =  { 0xFF, 0xFF, 0xFF };
-const std::vector<unsigned char> mHUIWHEELL =  { mCTRL, cWHEEL, 0x01 };
-const std::vector<unsigned char> mHUIWHEELR =  { mCTRL, cWHEEL, 0x65 };
 
-void printMessage(double deltatime,const std::vector< unsigned char > *message){
+void HUIMidi::printMessage(double deltatime,const std::vector< unsigned char > *message){
     unsigned int nBytes = message->size();
     std::cout << "bytes: ";
     for ( unsigned int i=0; i<nBytes; i++ ) 
@@ -29,7 +18,6 @@ void printMessage(double deltatime,const std::vector< unsigned char > *message){
 }
 
 HUIMidi::HUIMidi() {
-    bool live = false; 
     if( !instances.empty() ) stop();
     instances.push_back(this);
     try {
@@ -53,12 +41,26 @@ HUIMidi::~HUIMidi()
     if( !instances.empty() ) start();
 }
 
+void poll(PtTimestamp timestamp, void *) {
+    for (std::vector<HUIMidi *>::iterator it = instances.begin(); it != instances.end(); ++it) {
+        HUIMidi& midi = *(*it);
+        midi.timer();
+        midi.live++;
+        if(midi.live==8) {
+            midi.watchdog();
+            midi.live = 0;   
+        }
+    }
+}
+
 void huicallback( double deltatime, std::vector< unsigned char > *message, void * userdata )
 {
     HUIMidi& midi = *(HUIMidi *)userdata;
     if(*message == mHUIReq) {
-        midi.live = true;
+        midi.live = 0;
         //std::cout << ">>" << "HUIReq" << std::endl;
+        midi.huimidiout->sendMessage(&mHUIACK);
+        //std::cout << ">>" << "HUIAck" << std::endl;
         return;
     }
     midi.huiReceived(deltatime,message);
@@ -70,12 +72,12 @@ void callback( double deltatime, std::vector< unsigned char > *message, void * u
     midi.received(deltatime,message);
 }
 
-void HUIMidi::received( double deltatime, std::vector< unsigned char > *message) {
+void HUIMidi::received( double deltatime, const std::vector< unsigned char > *message) {
     std::cout << "DEV RECV ";
     printMessage(deltatime,message);
 }
 
-void HUIMidi::huiReceived( double deltatime, std::vector< unsigned char > *message) {
+void HUIMidi::huiReceived( double deltatime, const std::vector< unsigned char > *message) {
     std::cout << "VIRT RECV ";
     printMessage(deltatime,message);
 }
@@ -93,13 +95,7 @@ void HUIMidi::sendMessage(const std::vector< unsigned char > *message){
 }
 
 void HUIMidi::watchdog() {
-    if(live) {     
-        live = false;
-        huimidiout->sendMessage(&mHUIACK);
-       //std::cout << ">>" << "HUIAck" << std::endl;
-    } else
-        std::cout << "VIRT RECV " << "HUITimeout" << std::endl;
-    //huiSendMessage(&mHUIACK);
+    std::cout << "VIRT RECV " << "HUITimeout" << std::endl;
 }
 
 void HUIMidi::Connect(const char *Manufacturer,const char *Model) {
@@ -118,14 +114,11 @@ void HUIMidi::Connect(const char *Manufacturer,const char *Model) {
     huiSendMessage(&mHUIRESET);
 }
 
-void poll(PtTimestamp timestamp, void *) {
-    for (std::vector<HUIMidi *>::iterator it = instances.begin(); it != instances.end(); ++it) 
-        (*it)->watchdog();
-}
 
 
 void HUIMidi::start() {
-    PtError err = Pt_Start(2000, poll,NULL);  
+    live = 0;
+    PtError err = Pt_Start(500, poll,NULL); 
     if(err) throw err;
 }
 
