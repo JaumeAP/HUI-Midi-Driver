@@ -11,14 +11,16 @@ public:
     ~HUIMidi();
     void Sleep(int32_t duration);
     void Connect(const char *Manufacturer,const char *Model);
+  protected:
+    virtual void received( double deltatime, std::vector< unsigned char > *message);
+    virtual void sendMessage(const std::vector< unsigned char > *message);
+    virtual void huiReceived( double deltatime, std::vector< unsigned char > *message);
+    virtual void huiSendMessage(const std::vector< unsigned char > *message);
+  private:
     RtMidiIn *midiin;
     RtMidiOut *midiout;
     RtMidiIn *huimidiin;
     RtMidiOut *huimidiout;
-  protected:
-    virtual void huiReceived( double deltatime, std::vector< unsigned char > *message);
-    virtual void received( double deltatime, std::vector< unsigned char > *message);
-  private:
     bool live;
     void start();
     void stop();

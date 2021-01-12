@@ -7,11 +7,19 @@
 #include <vector>
 #include <iomanip>
 
-std::vector<HUIMidi *> instances;
-const std::vector<unsigned char> mHUIReq = { 0x90, 0, 0  };
-const std::vector<unsigned char> mHUIACK =  { 0x90, 0, 0x7F };
+#define mNOTE 0x90   // 144
+#define mCTRL 0xB0   // 176
 
-void printMessage(double deltatime,std::vector< unsigned char > *message){
+#define cWHEEL 0xB0   // 176
+
+std::vector<HUIMidi *> instances;
+const std::vector<unsigned char> mHUIReq = { mNOTE, 0, 0  };
+const std::vector<unsigned char> mHUIACK =  { mNOTE, 0, 0x7F };
+const std::vector<unsigned char> mHUIRESET =  { 0xFF, 0xFF, 0xFF };
+const std::vector<unsigned char> mHUIWHEELL =  { mCTRL, cWHEEL, 0x01 };
+const std::vector<unsigned char> mHUIWHEELR =  { mCTRL, cWHEEL, 0x65 };
+
+void printMessage(double deltatime,const std::vector< unsigned char > *message){
     unsigned int nBytes = message->size();
     std::cout << "bytes: ";
     for ( unsigned int i=0; i<nBytes; i++ ) 
@@ -72,14 +80,26 @@ void HUIMidi::huiReceived( double deltatime, std::vector< unsigned char > *messa
     printMessage(deltatime,message);
 }
 
+void HUIMidi::huiSendMessage(const std::vector< unsigned char > *message){
+    huimidiout->sendMessage(message);
+    std::cout << "VIRT SEND ";
+    printMessage(0,message);
+}
+
+void HUIMidi::sendMessage(const std::vector< unsigned char > *message){
+    midiout->sendMessage(message);
+    std::cout << "DEV SEND ";
+    printMessage(0,message);
+}
 
 void HUIMidi::watchdog() {
     if(live) {     
         live = false;
-        //std::cout << ">>" << "HUIAck" << std::endl;
+        huimidiout->sendMessage(&mHUIACK);
+       //std::cout << ">>" << "HUIAck" << std::endl;
     } else
         std::cout << "VIRT RECV " << "HUITimeout" << std::endl;
-    huimidiout->sendMessage(&mHUIACK);
+    //huiSendMessage(&mHUIACK);
 }
 
 void HUIMidi::Connect(const char *Manufacturer,const char *Model) {
@@ -92,9 +112,10 @@ void HUIMidi::Connect(const char *Manufacturer,const char *Model) {
     huimidiin->openVirtualPort(srcName);
     huimidiout->openVirtualPort(dstName);
     huimidiin->setCallback( &huicallback,this );
-    //huimidiin->ignoreTypes( false, false, false );
+    huimidiin->ignoreTypes( false, true, false );
     midiin->setCallback( &callback,this );
-    //midiin->ignoreTypes( false, false, false );
+    midiin->ignoreTypes( false, false, false );
+    huiSendMessage(&mHUIRESET);
 }
 
 void poll(PtTimestamp timestamp, void *) {
