@@ -12,8 +12,8 @@
 #define hSHUTLEFT    0x7F
 #define hSHUTRIGHT   0x01
 
-const std::vector<unsigned char> mHERCSHUTTLEL = { mCONTROLLER, hSHUTTLE1, hSHUTLEFT  };
-const std::vector<unsigned char> mHERCSHUTTLER = { mCONTROLLER, hSHUTTLE1, hSHUTRIGHT  };
+const std::vector<unsigned char> mHERCSHUTTLEL = { mCONTROL, hSHUTTLE1, hSHUTLEFT  };
+const std::vector<unsigned char> mHERCSHUTTLER = { mCONTROL, hSHUTTLE1, hSHUTRIGHT  };
 const std::vector<unsigned char> mHERCCUE1 = { mNOTE, hCUE1, hKEYSET  };
 const std::vector<unsigned char> mHERCPAUSE1 = { mNOTE, hPAUSE1, hKEYSET  };
 
@@ -24,8 +24,26 @@ protected:
 
 
 void Hercules::received( double deltatime, const std::vector< unsigned char > *message) {
-    if(*message == mHERCCUE1)
-       sendMessage(message);
+    if(*message == mHERCCUE1) {
+       huiSendMessage(&mHUIPREPSHUT);
+       huiSendMessage(&mHUISHUTON);
+       huiSendMessage(&mHUIPREPSHUT);
+       huiSendMessage(&mHUISHUTOFF);
+    }
+    if(*message == mHERCPAUSE1) {
+       huiSendMessage(&mHUIPREPSHUT);
+       huiSendMessage(&mHUIJOGON);
+       huiSendMessage(&mHUIPREPSHUT);
+       huiSendMessage(&mHUIJOGOFF);
+    }
+    if(*message == mHERCSHUTTLEL) {
+        huiSendMessage(&mHUISHUTTLEL);
+    }  
+    if(*message == mHERCSHUTTLER) {
+        huiSendMessage(&mHUISHUTTLER);
+    }  
+
+
     printMessage(deltatime,message);
 }
 

@@ -46,7 +46,7 @@ void poll(PtTimestamp timestamp, void *) {
         HUIMidi& midi = *(*it);
         midi.timer();
         midi.live++;
-        if(midi.live==8) {
+        if(midi.live==16) {
             midi.watchdog();
             midi.live = 0;   
         }
